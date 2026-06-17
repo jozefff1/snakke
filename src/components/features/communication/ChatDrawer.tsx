@@ -66,6 +66,11 @@ export default function ChatDrawer({ currentUserId, onClose }: Props) {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestTimestampRef = useRef<string | null>(null);
 
+  const scrollToBottom = useCallback(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, []);
+
   // Load paired users on mount
   useEffect(() => {
     fetch('/api/messages/room')
@@ -161,12 +166,16 @@ export default function ChatDrawer({ currentUserId, onClose }: Props) {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [selectedUser]);
 
-  // Scroll to bottom when messages change
+  // Keep the drawer thread anchored at the latest message after refresh/new data.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [msgs]);
+    scrollToBottom();
+    const rafId = window.requestAnimationFrame(scrollToBottom);
+    const timeoutId = window.setTimeout(scrollToBottom, 120);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [msgs, scrollToBottom]);
 
   const getIconLabel = (icon: Icon) => {
     if (labels[icon.id]) return labels[icon.id];

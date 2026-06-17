@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved the `/communicate` `Pairing` button inline with sentence action
   controls (next to `Send`) for signed-in users, keeping the QR-style icon and
   direct link to `/dashboard/patients`.
+- Stabilized chat history auto-scroll in `CommunicateThread` and `ChatDrawer`
+  so refresh/new data keeps the viewport anchored at the latest messages
+  instead of intermittently jumping to the top.
 - Added demo-only family cross-chat authorization behind `DEMO_FAMILY_CROSS_CHAT`.
   When enabled, connected accepted-pairing graphs up to 5 members can
   communicate across the group for real-life demo testing; when disabled (or if
