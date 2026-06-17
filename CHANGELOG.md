@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stabilized chat history auto-scroll in `CommunicateThread` and `ChatDrawer`
   so refresh/new data keeps the viewport anchored at the latest messages
   instead of intermittently jumping to the top.
+- Consolidated chat bottom-anchor behavior into shared hook
+  `usePinnedBottomScroll` to avoid duplicated scroll code across chat UIs.
 - Added demo-only family cross-chat authorization behind `DEMO_FAMILY_CROSS_CHAT`.
   When enabled, connected accepted-pairing graphs up to 5 members can
   communicate across the group for real-life demo testing; when disabled (or if

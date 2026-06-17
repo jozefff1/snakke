@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePinnedBottomScroll } from '@/hooks/usePinnedBottomScroll';
 
 export interface ThreadIcon {
   id: string;
@@ -102,11 +103,6 @@ export default function CommunicateThread({ currentUserId, iconLabels, collapsed
   const onNewMessageRef = useRef(onNewMessage);
   const collapsedRef = useRef(collapsed);
   const currentUserIdRef = useRef(currentUserId);
-
-  const scrollToBottom = useCallback(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, []);
 
   const getLabel = useCallback((icon: ThreadIcon) => {
     if (iconLabels[icon.id]) return iconLabels[icon.id];
@@ -223,16 +219,12 @@ export default function CommunicateThread({ currentUserId, iconLabels, collapsed
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeRoom]);
 
-  // Keep the thread anchored at the latest message after refresh/new data.
-  useEffect(() => {
-    scrollToBottom();
-    const rafId = window.requestAnimationFrame(scrollToBottom);
-    const timeoutId = window.setTimeout(scrollToBottom, 120);
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      window.clearTimeout(timeoutId);
-    };
-  }, [msgs, scrollToBottom]);
+  usePinnedBottomScroll({
+    containerRef: scrollRef,
+    enabled: !collapsed,
+    deps: [msgs.length, activeRoom?.userId, collapsed],
+    resetKeys: [activeRoom?.userId, collapsed],
+  });
 
   // ── Exposed via ref so parent can push new messages locally ──
   // (optimistic update — parent calls addMessage after a successful POST)
@@ -242,8 +234,7 @@ export default function CommunicateThread({ currentUserId, iconLabels, collapsed
     // Animate the sent message
     setNewMsgIds(new Set([msg.id]));
     setTimeout(() => setNewMsgIds(new Set()), 600);
-    setTimeout(scrollToBottom, 50);
-  }, [scrollToBottom]);
+  }, []);
 
   // Expose addMessage + activeRoom via a stable callback so the parent page can call it
   useEffect(() => {

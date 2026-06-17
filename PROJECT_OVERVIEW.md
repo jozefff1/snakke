@@ -135,6 +135,7 @@ Root
 │   │   ├── useFetch.ts              # Generic GET-on-mount fetch hook
 │   │   ├── useIconLabels.ts         # Per-icon custom label overrides (localStorage + event bus)
 │   │   ├── useIconRegistry.ts       # Unified icon registry: ICON_DATABASE + custom icons + labels; getByCategory / getById / search
+│   │   ├── usePinnedBottomScroll.ts # Shared chat bottom-anchor behavior with layout/resize handling
 │   │   └── usePreferences.ts        # User preferences (voice, a11y) + Redux sync
 │   ├── contexts/
 │   │   └── LanguageContext.tsx      # i18n: EN/NO full UI (all pages incl. auth+about), ES/FR/DE icons only

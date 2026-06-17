@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAppSelector } from '@/store/hooks';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIconLabels } from '@/hooks/useIconLabels';
+import { usePinnedBottomScroll } from '@/hooks/usePinnedBottomScroll';
 
 interface Icon {
   id: string;
@@ -65,11 +66,6 @@ export default function ChatDrawer({ currentUserId, onClose }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestTimestampRef = useRef<string | null>(null);
-
-  const scrollToBottom = useCallback(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, []);
 
   // Load paired users on mount
   useEffect(() => {
@@ -166,16 +162,12 @@ export default function ChatDrawer({ currentUserId, onClose }: Props) {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [selectedUser]);
 
-  // Keep the drawer thread anchored at the latest message after refresh/new data.
-  useEffect(() => {
-    scrollToBottom();
-    const rafId = window.requestAnimationFrame(scrollToBottom);
-    const timeoutId = window.setTimeout(scrollToBottom, 120);
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      window.clearTimeout(timeoutId);
-    };
-  }, [msgs, scrollToBottom]);
+  usePinnedBottomScroll({
+    containerRef: scrollRef,
+    enabled: Boolean(selectedUser),
+    deps: [msgs.length, selectedUser?.id],
+    resetKeys: [selectedUser?.id],
+  });
 
   const getIconLabel = (icon: Icon) => {
     if (labels[icon.id]) return labels[icon.id];

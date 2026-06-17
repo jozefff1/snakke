@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/requireAuth';
 import { db } from '@/lib/db/client';
 import { pairings, pairingRequests, users } from '@/lib/db/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 
 function isDemoOpenPairingEnabled() {
   return process.env.DEMO_OPEN_PAIRING === 'true';
@@ -110,6 +110,47 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json({ error: 'You are already paired with this person' }, { status: 409 });
+  }
+
+  // Check pairing limit: max 5 accepted pairings per user
+  const [requesterPairingCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(pairings)
+    .where(
+      and(
+        eq(pairings.status, 'accepted'),
+        or(
+          eq(pairings.guardianId, invite.requesterId),
+          eq(pairings.childId, invite.requesterId)
+        )
+      )
+    );
+
+  const [acceptorPairingCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(pairings)
+    .where(
+      and(
+        eq(pairings.status, 'accepted'),
+        or(
+          eq(pairings.guardianId, acceptorId),
+          eq(pairings.childId, acceptorId)
+        )
+      )
+    );
+
+  if ((requesterPairingCount?.count ?? 0) >= 5) {
+    return NextResponse.json(
+      { error: 'The person who sent this invite has reached their pairing limit (5)' },
+      { status: 409 }
+    );
+  }
+
+  if ((acceptorPairingCount?.count ?? 0) >= 5) {
+    return NextResponse.json(
+      { error: 'You have reached your pairing limit (5). Remove an existing pairing to accept new ones.' },
+      { status: 409 }
+    );
   }
 
   // Create the pairing
